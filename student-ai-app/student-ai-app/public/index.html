@@ -491,14 +491,40 @@ if (!currentConvId) return;
 
   try {
     let full = '';
-    const stream = await engine.chat.completions.create({ messages, stream: true, temperature: 0.7 });
-    for await (const chunk of stream) {
-      const delta = chunk.choices[0]?.delta?.content || '';
-      full += delta;
-      botBubble.textContent = full;
-      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+  const stream = await engine.chat.completions.create({
+    messages,
+    stream: false,
+    temperature: 0.7
+});
+
+let received = false;
+
+for await (const chunk of stream) {
+
+    const delta = chunk.choices?.[0]?.delta?.content ?? "";
+
+    if (delta) {
+        received = true;
+        full += delta;
+        botBubble.textContent = full;
+
+        document.getElementById("messages").scrollTop =
+            document.getElementById("messages").scrollHeight;
     }
-    history.push({ role: 'assistant', content: full });
+}
+
+if (!received) {
+    throw new Error("Model returned no response.");
+}
+  if (!full.trim()) {
+    full = "দুঃখিত, কোনো উত্তর তৈরি করা যায়নি।";
+    botBubble.textContent = full;
+}
+
+history.push({
+    role: "assistant",
+    content: full
+});
 
     // Persist to backend (server never sees or generates the AI content — just stores it)
     try {
