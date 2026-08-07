@@ -497,25 +497,12 @@ if (!currentConvId) return;
     temperature: 0.7
 });
 
-let received = false;
+full = stream.choices?.[0]?.message?.content ?? "";
 
-for await (const chunk of stream) {
+botBubble.textContent = full;
 
-    const delta = chunk.choices?.[0]?.delta?.content ?? "";
-
-    if (delta) {
-        received = true;
-        full += delta;
-        botBubble.textContent = full;
-
-        document.getElementById("messages").scrollTop =
-            document.getElementById("messages").scrollHeight;
-    }
-}
-
-if (!received) {
-    throw new Error("Model returned no response.");
-}
+document.getElementById("messages").scrollTop =
+    document.getElementById("messages").scrollHeight;
   if (!full.trim()) {
     full = "দুঃখিত, কোনো উত্তর তৈরি করা যায়নি।";
     botBubble.textContent = full;
