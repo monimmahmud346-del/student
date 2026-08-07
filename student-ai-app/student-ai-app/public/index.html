@@ -241,7 +241,7 @@
 </div>
 
 <script type="module">
-import * as webllm from "https://esm.run/@mlc-ai/web-llm";
+import * as webllm from "https://esm.run/@mlc-ai/web-llm@0.2.79";
 
 /* ---------------- API helper ---------------- */
 async function api(path, { method = 'GET', body, token } = {}) {
@@ -425,6 +425,18 @@ function hideTyping() { const t = document.getElementById('typingIndicator'); if
 document.getElementById('loadModelBtn').onclick = async () => {
   if (engineLoading) return;
   engineLoading = true;
+  // Dispose old engine
+if (engine) {
+    try {
+        await engine.unload?.();
+    } catch (e) {}
+
+    try {
+        engine.dispose?.();
+    } catch (e) {}
+
+    engine = null;
+}
   const modelId = document.getElementById('modelSelect').value;
   document.getElementById('loadModelBtn').disabled = true;
   document.getElementById('modelSelect').disabled = true;
@@ -437,6 +449,15 @@ document.getElementById('loadModelBtn').onclick = async () => {
         document.getElementById('statusLine').textContent = pct + '%';
       }
     });
+    await engine.chat.completions.create({
+    messages: [
+        {
+            role: "user",
+            content: "hi"
+        }
+    ],
+    max_tokens: 1
+});
     document.getElementById('statusLine').textContent = 'প্রস্তুত';
     document.getElementById('userInput').disabled = false;
     document.getElementById('sendBtn').disabled = false;
@@ -452,7 +473,14 @@ document.getElementById('loadModelBtn').onclick = async () => {
 async function sendMessage() {
   const input = document.getElementById('userInput');
   const text = input.value.trim();
-  if (!text || !engine || !currentConvId) return;
+ if (!text) return;
+
+if (!engine) {
+    alert("Load AI first");
+    return;
+}
+
+if (!currentConvId) return;
   input.value = '';
   addMessage('user', text);
   const botBubble = addMessage('bot', '...', currentSubject);
